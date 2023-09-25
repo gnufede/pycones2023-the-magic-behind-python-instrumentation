@@ -4,8 +4,6 @@
 def inner_query():
     import sqlite3
 
-    # from interface import MeasuredDatabase
-
     # Define the path to your SQLite database file
     db_file = ":memory:"
     try:
@@ -28,10 +26,6 @@ def inner_query():
 
         # Fetch the results (if the query returns data)
         results = cursor.fetchall()
-
-        # # Process and print the results
-        # for row in results:
-        #     print(row)
 
     except sqlite3.Error as e:
         print("Error connecting to SQLite:", e)
