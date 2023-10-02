@@ -175,7 +175,6 @@ def timing_decorator(func):
 				## Decorators Pros
 - Quite straightforward
 - Multiple decorators supported
-- Allows function "inheritance"
 				---
 				## Decorators Cons
 - Code ownership required
@@ -210,8 +209,6 @@ query_results = our_query.inner_query()
 - `import pdb`
 				---
 				## Monkeypatching Pros
-- No code ownership required
-- Allows function "inheritance"
 - Very low patching overhead
 				---
 				## Monkeypatching Cons
@@ -222,7 +219,7 @@ query_results = our_query.inner_query()
 - `pip install forbiddenfruit`
 				---
 				## Tree of Life
-				![ast](img/abstract_tree.jpg)
+				![tree of life](img/tree_of_life.png)
 				---
 				## Abstract Syntax Tree
 				![ast](img/ast.png)
@@ -286,8 +283,6 @@ if __name__ == "__main__":
 - `pip install flake8`
 				---
 				## AST Patching Pros
-- No code ownership required
-- Allows function "inheritance"
 - Allows source code information (i.e. line number)
 				---
 				## AST Patching Cons
@@ -398,8 +393,6 @@ query_results = inner_query()
 - `pip install coveragepy`
 				---
 				## Bytecode Patching Pros
-- No code ownership required
-- Allows function "inheritance"
 - Allows low level access
 				---
 				## Bytecode Patching Cons
@@ -426,7 +419,7 @@ def patch_ast(module, module_name):
     # Parse the source code into an AST
     tree = ast.parse(source_code)
     # Insert your AST manipulation logic here
-    insert_print_stmt(tree, module_name)
+    insert_ast_print_stmt(tree, module_name)
     # Compile the modified AST back to source code
     return compile(tree,
                    filename=module.__file__,
@@ -445,29 +438,10 @@ def exec_module(self, module):
     # within the module's namespace
     _call_with_frames_removed(exec, code, module.__dict__)
 
-
 setattr(SourceFileLoader, "exec_module", exec_module)
 ```
 				---
-				## ✨ AST auto patcher
-```shell
-$ echo "import auto_patcher" > sitecustomize.py
-$ PYTHONPATH=$PYTHONPATH:. python
-Python 3.9.9 (main, Jun 22 2022, 12:48:18)
-[Clang 13.1.6 (clang-1316.0.21.2.5)] on darwin
-Type "help", "copyright", "credits" or "license" for more information.
-rlcompleter
->>> import pytest
-_pytest
-_pytest._version
-__future__
-signal
-_weakrefset
-threading
-[...]
-```
-				---
-				## ✨ Bytecode version
+				## ✨ Bytecode auto patcher
 ```python
 from bytecode import Bytecode, Instr
 
@@ -485,7 +459,7 @@ def new_get_code(self, fullname):
     return new_bytecode.to_code()
 ```
 				---
-				## ✨ Bytecode version
+				## ✨ Bytecode auto patcher
 ```python
 from importlib._bootstrap_external import (
                     SourceLoader,
@@ -495,6 +469,33 @@ from importlib._bootstrap_external import (
 for i in SourceLoader, SourcelessFileLoader:
     setattr(i, "_orig_get_code", i.get_code)
     setattr(i, "get_code", new_get_code)
+```
+				---
+				## 📚 Sitecustomize
+https://docs.python.org/3.10/library/site.html
+> This module is automatically imported during initialization. [...]
+> After these path manipulations, an attempt is made to import a module named sitecustomize, which can perform arbitrary site-specific customizations.
+				---
+				## 📚 PYTHONPATH
+https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
+> Augment the default search path for module files. The format is the same as the shell’s PATH: one or more directory pathnames separated by os.pathsep (e.g. colons on Unix or semicolons on Windows).
+				---
+				## ✨ All together now
+```shell
+$ echo "import auto_patcher" > sitecustomize.py
+$ PYTHONPATH=$PYTHONPATH:. python
+Python 3.9.9 (main, Jun 22 2022, 12:48:18)
+[Clang 13.1.6 (clang-1316.0.21.2.5)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+rlcompleter
+>>> import pdb
+string
+cmd
+fnmatch
+opcode
+dis
+token
+[...]
 ```
 				---
 				## Too much information
