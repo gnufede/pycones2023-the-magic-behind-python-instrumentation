@@ -21,24 +21,37 @@
 				## Desentrañando el código: La magia de la instrumentación en Python
 				![qrcode](img/qrcode.png)
 
-				[github.com/gnufede/pycones2023-instrumentation-python](https://github.com/gnufede/pycones2023-instrumentation-python)
-
 				Santa Cruz de Tenerife, Oct 07, 2023
 				---
 				## Who is Federico Mon
 				![my interests](img/myself.png)
 				[@gnufede](https://twitter.com/gnufede)
 				---
-				## Instrumentation 🔤
-				instrumentation refers to the measure of a product's performance, in order to diagnose errors and to write trace information
+				## Instrumentation
+				the measure of a product's performance, in order to diagnose errors and to write trace information
+                (Wikipedia)
 				---
-				## Rationale: What's inside the hat? 🎩
-				![race car](img/race-car.jpg)
+				## Datadog's APM
+				![apm_1](img/apm_1.avif)
 				---
-				## Story time 📜
-				![race car](img/race-car.jpg)
+				## Datadog's APM
+				![apm_2](img/apm_2.jpeg)
 				---
-				## Our protagonist
+				## Datadog's APM Python library
+```shell
+pip install ddtrace
+```
+				[http://github.com/Datadog/dd-trace-py](http://github.com/Datadog/dd-trace-py)
+				---
+				## Vuln detection (OWASP)
+				![asm](img/asm2.png)
+				---
+				## What's inside the hat? 🎩
+				![magician's hat](img/magician.webp)
+				---
+				## 📜 Story time
+				---
+				## our_query.py
 				```python
 def inner_query():
     import sqlite3
@@ -54,7 +67,7 @@ def inner_query():
 
 				```
 				---
-				## Our protagonist
+				## our_query.py
 				```python
         # Write your SQL query
         sql_query = """
@@ -67,7 +80,7 @@ def inner_query():
         cursor.execute(sql_query)
 				```
 				---
-				## Our protagonist
+				## our_query.py
 				```python
         # Fetch the results (if the query returns data)
         results = cursor.fetchall()
@@ -83,12 +96,7 @@ def inner_query():
             connection.close()
 				```
 				---
-				## Measuring
-				> “If you can’t measure it, you can’t improve it.”
-
-				Peter Drucker (?)
-				---
-				## Measuring by hand 🤚
+				## 🤚 Measuring by hand
 				```python
 				import time
 				start_time = time.time()
@@ -100,7 +108,10 @@ def inner_query():
 				return result
 				```
 				---
-				## Techniques 📇
+				## 📇 Techniques
+				---
+				## Inheritance (OOP)
+				![inheritance](img/inheritance.png)
 				---
 				## Inheritance (OOP)
 				```python
@@ -117,14 +128,33 @@ class MeasuredDatabase(object):
 		)
 				```
 				---
-				## Inheritance II (OOP)
+				## Inheritance (OOP)
 				```python
-
 from interface import MeasuredDatabase
 
 class MeasuredSQLite(MeasuredDatabase):
     def inner_query(self):
 	    ...
+				```
+				---
+				## Inheritance Pros
+- Very straightforward
+- Multiple inheritance is "easy"
+				---
+				## Inheritance Cons
+- Code ownership required
+- Only class/method "inheritance" supported (no functions)
+				---
+				## Decorators
+				![decorators](img/decorators.webp)
+				---
+				## Decorators
+				```python
+from interface import timing_decorator
+
+@timing_decorator
+def inner_query()
+	...
 				```
 				---
 				## Decorators
@@ -142,77 +172,85 @@ def timing_decorator(func):
     return wrapper
 				```
 				---
-				## Decorators II
-				```python
-from interface import timing_decorator
-
-@timing_decorator
-def inner_query()
-	...
-				```
+				## Decorators Pros
+- Quite straightforward
+- Multiple decorators supported
+- Allows function "inheritance"
+				---
+				## Decorators Cons
+- Code ownership required
+				---
+				## More on decorators
+- `import functools.wraps`
+- `pip install wrapt`
 				---
 				## Monkeypatching
-				![t.hanks](img/indiana.gif)
-				<!-- ![indiana jones monkeypatching](https://media2.giphy.com/media/s26V48LUOTMN5DIfrY/giphy480p.mp4) -->
+				![indiana](img/indiana.gif)
 				---
 				## Monkeypatching
 				```python
 def inner_query_patched():
     start_time = time.time()
 	# Call the original function
-    result = sqlite._original_inner_query()
+    result = our_query._inner_query()
     end_time = time.time()
     print(f"Function inner_query took {end_time - start_time} seconds")
     return result
 
 # Replace the original inner_query with the patched version
-setattr(sqlite, "_original_inner_query", sqlite.inner_query)
-setattr(sqlite, "inner_query", inner_query_patched)
+setattr(our_query, "_inner_query", our_query.inner_query)
+setattr(our_query, "inner_query", inner_query_patched)
 
 # Call inner_query function to execute the patched function
-query_results = sqlite.inner_query()
+query_results = our_query.inner_query()
 				```
 				---
+				## Uses monkeypatching techniques
+- `import mock`
+- `import pdb`
+				---
+				## Monkeypatching Pros
+- No code ownership required
+- Allows function "inheritance"
+- Very low patching overhead
+				---
+				## Monkeypatching Cons
+- Multiple monkeypatching is messy
+				---
+				## More on monkeypatching
+- `pip install wrapt`
+- `pip install forbiddenfruit`
+				---
+				## Tree of Life
+				![ast](img/abstract_tree.jpg)
+				---
+				## Abstract Syntax Tree
+				![ast](img/ast.png)
+				---
 				## AST
-				![race car](img/race-car.jpg)
 				```python
 >>> astpretty.pprint(ast.parse("start_time = time.time()"))
 Module(
     body=[
         Assign(
-            lineno=1,
-            col_offset=0,
-            end_lineno=1,
-            end_col_offset=24,
-            targets=[Name(lineno=1, col_offset=0, end_lineno=1, end_col_offset=10, id='start_time', ctx=Store())],
+            targets=[Name(id='start_time', ctx=Store())],
             value=Call(
-                lineno=1,
-                col_offset=13,
-                end_lineno=1,
-                end_col_offset=24,
                 func=Attribute(
-                    lineno=1,
-                    col_offset=13,
-                    end_lineno=1,
-                    end_col_offset=22,
-                    value=Name(lineno=1, col_offset=13, end_lineno=1, end_col_offset=17, id='time', ctx=Load()),
+                    value=Name(id='time', ctx=Load()),
                     attr='time',
                     ctx=Load(),
                 ),
                 args=[],
                 keywords=[],
             ),
-            type_comment=None,
         ),
     ],
-    type_ignores=[],
 )
 				```
 				---
 				## AST Patching
 				```python
 import ast
-
 class TimingVisitor(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         if node.name == "inner_query":
@@ -229,350 +267,249 @@ class TimingVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 				```
 				---
-				## AST Patching II
+				## AST Patching
 				```python
 if __name__ == "__main__":
     # Apply AST patching to modify the inner_query method
     tree = ast.parse(inspect.getsource(inner_query))
     TimingVisitor().visit(tree)
-    modified_code = astor.to_source(tree)
+    altered_code = astor.to_source(tree)
 
-    compiled_code = compile(modified_code, "<string>", "exec")
+    compiled_code = compile(altered_code, "<string>", "exec")
     exec(compiled_code, globals())
 
     # Call the inner_query method to execute the SQL query
     query_results = inner_query()
 				```
 				---
-				## Bytecode 🔤
-				![race car](img/race-car.jpg)
+				## Uses AST techniques
+- `pip install flake8`
+				---
+				## AST Patching Pros
+- No code ownership required
+- Allows function "inheritance"
+- Allows source code information (i.e. line number)
+				---
+				## AST Patching Cons
+- Multiple AST patching is messy
+- Doesn't work on ``.pyc`` files
+- Introduces patching overhead (at startup)
+				---
+				## More on AST
+- `import ast`
+- `pip install astpretty`
+- `pip install astunparse`
+- `pip install astor`
+- https://greentreesnakes.readthedocs.io/en/latest/
+				---
+				## Bytecode
+				```
+>>> def fun():
+...     import time
+...     start_time=time.time()
+...
+>>> import dis
+				```
+				---
+				## Bytecode
+				```
+>>> dis.dis(fun)
+  2           0 LOAD_CONST               1 (0)
+              2 LOAD_CONST               0 (None)
+              4 IMPORT_NAME              0 (time)
+              6 STORE_FAST               0 (time)
+
+  3           8 LOAD_FAST                0 (time)
+             10 LOAD_METHOD              0 (time)
+             12 CALL_METHOD              0
+             14 STORE_FAST               1 (start_time)
+             16 LOAD_CONST               0 (None)
+             18 RETURN_VALUE
+				```
 				---
 				## Bytecode Patching
 				```python
-				```
-				---
-				## Result
-				```
-				script-cpython39-1   | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cpython39-1   | timeit: 50.803067
-				```
-				---
-				![what do we want](img/what_do_we_want.jpg)
-				---
-				## Defining success
-				- speedup = old / new
-				- 50.80 / 50.80 = 1
-				- 50.80 / x > 1
-				---
-				## Our contenders:
-				- [Next Python release (3.11)](https://docs.python.org/3.11/whatsnew/3.11.html)
-				- [Pypy](https://www.pypy.org/)
-				- [Nuitka](https://nuitka.net/)
-				- [Cython](https://cython.org/)
-				- [PyBind11](https://github.com/pybind/pybind11)
-				---
-				## Other contenders:
-				- [Jython](https://www.jython.org/)
-				- [IronPython](https://ironpython.net/)
-				- [RustPython](https://rustpython.github.io/)
-				- [Stackless](https://github.com/stackless-dev/stackless/)
-				- [Numba](https://numba.pydata.org/)
-				- [PyO3](https://pyo3.rs/)
-				- [cffi](https://cffi.readthedocs.io/en/latest/)
-				---
-				## Next Python release (3.11)
-				[https://docs.python.org/3.11/whatsnew/3.11.html](https://docs.python.org/3.11/whatsnew/3.11.html)
-				---
-				## Python 3.11 docker
-				```
-				FROM python:3.11-rc
-				WORKDIR /usr/src/app
-				CMD [ "python", "./script.py" ]
-				```
-				---
-				## Python 3.11 gotchas
-				- Runtime owner
-				- Not fully tested yet
-				---
-				## Result
-				```
-				script-cpython311-1  | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cpython311-1  | timeit: 32.825104
-				```
-				---
-				## [Pypy](https://www.pypy.org/)
-				> A fast, compliant alternative implementation of Python
-				---
-				## Pypy docker
-				```
-				FROM pypy:3.9
-				WORKDIR /usr/src/app
-				CMD [ "pypy3", "./script.py" ]
-				```
-				---
-				## Result
-				```
-				script-pypy39-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-pypy39-1      | timeit: 12.245769
-				```
-				---
-				## Pypy gotchas
-				- Runtime owner
-				- Not 100% compatible with CPython
-				---
-				## Nuitka
-				[Nuitka The Python Compiler](https://nuitka.net/)
-				---
-				## Nuitka docker
-				```docker
-				FROM python:3.9
-				WORKDIR /usr/src/app
-				RUN pip install nuitka orderedset
-				COPY * ./
-				RUN python -m nuitka --module ./find_headers.py
-				CMD ["python", "./script.py" ]
-				```
-				---
-				## Result
-				```
-				script-nuitka-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-nuitka-1      | timeit: 65.005592
-				```
-				---
-				## Nuitka gotchas
-				- Compilation time
-				- Some parts stripped out (like stacktrace)
-				- Only works with CPython
-				---
-				## [Cython](https://cython.org/)
-				> Cython is an optimising static compiler for both the Python programming language and the extended Cython programming language (based on Pyrex)
-				---
-				## Cython docker
-				```docker
-				FROM python:3.9
-				RUN pip install --no-cache-dir Cython
-				COPY * /usr/src/app/
-				RUN python setup.py build_ext --inplace
-				CMD [ "python", "script_cython.py" ]
-				```
-				---
-				## Cython setup.py
-				```
-				from setuptools import setup
-				from Cython.Build import cythonize
+from bytecode import Bytecode, Instr
 
-				setup(
-				  name="Hello world app",
-				  ext_modules=cythonize("cyscript.pyx", "_cystring.pxd"),
-				  language="C++",
-				  zip_safe=False,
-				)
+top_bytecode = [
+    Instr("LOAD_CONST", 0),
+    Instr("LOAD_CONST", arg=None),
+    Instr("IMPORT_NAME", arg="time"),
+    Instr("STORE_FAST", arg="time"),
+    Instr("LOAD_FAST", arg="time"),
+    Instr("LOAD_METHOD", arg="time"),
+    Instr("CALL_METHOD", arg=0),
+    Instr("STORE_FAST", arg="start_time"),
+    Instr("LOAD_CONST", arg=0),
+    Instr("LOAD_CONST", arg=None),
+]
 				```
 				---
-				## Cython 1: Cython .pyx
+				## Bytecode Patching
 				```python
-				# cython: c_string_type=unicode, c_string_encoding=utf8
-				cdef tuple valid_user_agents = (
-				  "useragent",
-				  "http-request-user-agent",
-				)
-				cpdef str find_user_agent(dict headers):
-				  cdef str m, v, user_agent
-				  for m, v in headers.items():
-				    for user_agent in valid_user_agents:
-				      if m.lower().replace("_", "-") == user_agent:
-				        return v
-				  return None
+bottom_bytecode = [
+    Instr("LOAD_FAST", arg="time"),
+    Instr("LOAD_METHOD", arg="time"),
+    Instr("CALL_METHOD", arg=0),
+    Instr("STORE_FAST", arg="end_time"),
+    Instr("LOAD_GLOBAL", arg="print"),
+    Instr("LOAD_CONST", arg="Function took "),
+    Instr("LOAD_FAST", arg="end_time"),
+    Instr("LOAD_FAST", arg="start_time"),
+    Instr("BINARY_SUBTRACT"),
+    Instr("FORMAT_VALUE", arg=0),
+    Instr("LOAD_CONST", arg=" seconds to execute"),
+    Instr("BUILD_STRING", arg=3),
+    Instr("CALL_FUNCTION", arg=1),
+    Instr("POP_TOP"),
+    Instr("LOAD_CONST", arg=None),
+    Instr("RETURN_VALUE"),
+]
 				```
 				---
-				## Result
-				```
-				script-cython-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cython-1      | timeit: 40.818121
-				```
-				---
-				## Cython 2: C++ .pyx
+				## Bytecode Patching
 				```python
-				# cython: c_string_type=unicode, c_string_encoding=utf8
-				# distutils: language = c++
-				from _cystring cimport cfind_user_agent
+# Function to add timing measurement to a function's bytecode
+def add_timing_measurement(func):
+    # Get the bytecode of the function
+    code = func.__code__
+    bytecode = Bytecode.from_code(code)
 
-				cpdef str find_user_agent(dict headers):
-				  cdef str res = cfind_user_agent(headers)
-				  return res
+    bytecode[:2] = top_bytecode
+    bytecode[-2:] = bottom_bytecode
+
+    func.__code__ = bytecode.to_code()
+
+    return func
 				```
 				---
-				## Cython 2: C++ .pxd
+				## Bytecode Patching
 				```python
-				from libcpp.unordered_map cimport unordered_map
+from our_query import inner_query
 
-				cdef extern from "cystring.h" namespace "cystring":
-				  char* cfind_user_agent_header(
-				    unordered_map[char*, char*] &headers
-				  );
-				```
-				---
-				## Cython 2: C++ cystring.h
-				```c++
-				namespace cystring {
-				inline std::string find_user_agent_header(
-				const std::unordered_map<std::string, std::string> &headers) {
-				for (const auto &header : headers) {
-				  for (int i = 0; i < 5; i++) {
-				    std::string header_string = header.first;
-				    manipulate_string(&(header_string));
-				    if (header_string == valid_user_agent_formats[i]) {
-				      return (std::string)header.second;
-				    }
-				  }
-				}
-				return NULL;
-				}
-				```
-				---
-				## Result
-				```
-				script-cython-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cython-1      | timeit: 18.815749
-				```
-				---
-				## Cython gotchas
-				- Compilation required
-				- Generated code (Cython language) is hard to debug
-				- Conversion toll
-				- Only works with CPython
-				---
-				## [PyBind11](https://pybind11.readthedocs.io/en/stable/)
-				> a lightweight header-only library that exposes C++ types in Python and vice versa
-				---
-				## PyBind11 docker
-				```docker
-				FROM python:3.9
-				RUN pip install --no-cache-dir pybind11[global]
-				COPY * /usr/src/app/
-				RUN c++ -O3 -Wall -shared -std=c++11 -fPIC \
-					$(python3 -m pybind11 --includes) \
-					pybind11string.cpp -o pybind11string.so
-				CMD [ "python", "script_pybind11.py" ]
-				```
-				---
-				## pybind11string.cpp
-				```c++
-				#include "cystring.h"
-				#include <pybind11/pybind11.h>
-				#include <pybind11/stl.h>
+# Apply bytecode patching to modify the inner_query function
+inner_query = add_timing_measurement(inner_query)
 
-				PYBIND11_MODULE(pybind11string, m) {
-				m.doc() = "my module docstring"; // optional module docstring
-				m.def("cfind_user_agent_header",
-				    &cystring::find_user_agent_header,
-				    "my function docstring"
-				);
-				}
+# Call the inner_query function to execute the SQL query
+query_results = inner_query()
 				```
 				---
-				## Result
-				```
-				script-pybind11-1    | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-pybind11-1    | timeit: 18.212787
-				```
+				## Uses Bytecode techniques
+- `pip install coveragepy`
 				---
-				## PyBind11 gotchas
-				- Compilation required
-				- Conversion toll
-				- Works with CPython and PyPy
+				## Bytecode Patching Pros
+- No code ownership required
+- Allows function "inheritance"
+- Allows low level access
 				---
-				## Photo finish
-				![checkered flag](img/checkered_flag.png)
+				## Bytecode Patching Cons
+- Introduces patching overhead (low)
+- Bytecode patching is quite messy
+- Hard to maintain (wrt Python versions)
 				---
-				## Contest results
-				```
-				script-pypy39-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-pypy39-1      | timeit: 12.245769
-				script-pybind11-1    | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-pybind11-1    | timeit: 18.212787
-				script-cpython311-1  | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cpython311-1  | timeit: 32.825104
-				script-cpython39-1   | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cpython39-1   | timeit: 50.803067
-				script-cython-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cython-1      | timeit: 40.818121
-				script-cython-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-cython-1      | timeit: 18.815749
-				script-nuitka-1      | Header: Mozilla/5.0 (X11; Linux x86_64)...
-				script-nuitka-1      | timeit: 65.005592
-				```
+				## More on Bytecode
+- `import dis`
+- `pip install bytecode`
 				---
-				## Results
-				|tech|time|speedup|
-				|---|---|---|
-				|python 3.9|50.80|1|
-				|python 3.11|32.82|1.54|
-				|pypy 3.9|12.25|4.14|
-				|nuitka 3.9|65.00|0.78|
-				|cython|40.81|1.24|
-				|cython c++|18.81|2.70|
-				|pybind11|18.21|2.78|
-				---
-  				![My Python code runs 2.78x faster](img/so_fast.jpg)
-  				---
-				## Analyzing the request (tools)
-				- [py-spy](https://github.com/benfred/py-spy)
-				- [speedscope.app](speedscope.app)
-				---
-				## Analyzing the request
-				![Alt text](img/request.png)
-				---
-				## [Amdahl's law](https://en.wikipedia.org/wiki/Amdahl%27s_law)
-				> the overall performance improvement gained by optimizing a single part of a system is limited by the fraction of time that the improved part is actually used
-				---
-				## [Amdahl's law](https://en.wikipedia.org/wiki/Amdahl%27s_law)
-				![folding paper](img/folding-paper.png)
-				---
-				## [Amdahl's law](https://en.wikipedia.org/wiki/Amdahl%27s_law)
-				`$$ {\displaystyle S_{\text{latency}}(s)={\frac {1}{(1-p)+{\frac {p}{s}}}}} $$`
-				---
-				## Our case
-				- total request time: 11.07 ms
-				- function time: 0.35714 ms
-				- proportion: 0.033
-				- speedup: 2.78
-				`$$ {\displaystyle S_{\text{latency}}={\frac {1}{(1-0.033)+{\frac {0.033}{2.78}}}}=1.021} $$`
-				---
-  				![My Python code runs 1.021x faster](img/not_so_fast.jpg)
-				---
-				## Dream case
-				- total request time: 11.07 ms
-				- function time: 0.35714 ms
-				- proportion: 0.033
-				- speedup: **1_000_000**
-				`$$ {\displaystyle S_{\text{latency}}={\frac {1}{(1-0.033)+{\frac {0.033}{1,000,000}}}}=1.034} $$`
-				---
-				## Conclusions
-				---
-				## 1. The Python ecosystem is awesome
-				![python ecosystem is awesome](img/rainforest.jpg)
-				---
-				## 2. Avoid premature optimization
-				> “Premature optimization is the root of all evil”
+				## The Prestige
+				![el truco final](img/el_truco_final.jpeg)
 
-				Donald Knuth
 				---
-				## 3. Measure all the things
-				![measure all the things](img/measure.jpg)
+				## ✨ AST auto patcher
+```python
+import ast
+
+def patch_ast(module, module_name):
+    # Open and parse the source code of the module
+    with open(module.__file__, "r") as source_file:
+        source_code = source_file.read()
+    # Parse the source code into an AST
+    tree = ast.parse(source_code)
+    # Insert your AST manipulation logic here
+    insert_print_stmt(tree, module_name)
+    # Compile the modified AST back to source code
+    return compile(tree,
+                   filename=module.__file__,
+                   mode="exec"
+    )
+```
 				---
-				## 4. You can't improve what you can't control
-				![have everything under control](img/have-everything-under-control.png)
+				## ✨ AST auto patcher
+```python
+from importlib._bootstrap_external import SourceFileLoader
+
+def exec_module(self, module):
+    # Patch the AST here
+    code = patch_ast(module, self.name)
+    # Execute the modified source code
+    # within the module's namespace
+    _call_with_frames_removed(exec, code, module.__dict__)
+
+
+setattr(SourceFileLoader, "exec_module", exec_module)
+```
 				---
-				## Questions?
+				## ✨ AST auto patcher
+```shell
+$ echo "import auto_patcher" > sitecustomize.py
+$ PYTHONPATH=$PYTHONPATH:. python
+Python 3.9.9 (main, Jun 22 2022, 12:48:18)
+[Clang 13.1.6 (clang-1316.0.21.2.5)] on darwin
+Type "help", "copyright", "credits" or "license" for more information.
+rlcompleter
+>>> import pytest
+_pytest
+_pytest._version
+__future__
+signal
+_weakrefset
+threading
+[...]
+```
 				---
-				## How about these questions?
-				- Why didn't you start by running Py-Spy?
-				- Would you run any of those in production?
-				- Which one would you choose?
+				## ✨ Bytecode version
+```python
+from bytecode import Bytecode, Instr
+
+def print_stmt_bytecode(fullname):
+    return [
+        Instr("LOAD_NAME", arg="print"),
+        Instr("LOAD_CONST", arg=fullname),
+        Instr("CALL_FUNCTION", arg=1),
+    ]
+
+def new_get_code(self, fullname):
+    orig_code = self._orig_get_code(fullname)
+    new_bytecode = Bytecode.from_code(orig_code)
+    new_bytecode[:0] = print_stmt_bytecode(fullname)
+    return new_bytecode.to_code()
+```
+				---
+				## ✨ Bytecode version
+```python
+from importlib._bootstrap_external import (
+                    SourceLoader,
+                    SourcelessFileLoader
+                    )
+
+for i in SourceLoader, SourcelessFileLoader:
+    setattr(i, "_orig_get_code", i.get_code)
+    setattr(i, "get_code", new_get_code)
+```
+				---
+				## Too much information
+				![too much information](img/too_much_information.gif)
+				---
+				## Fede's Recommendations
+				![fede's recommendations](img/fede.jpg)
+				---
+				1. For your own code, use decorators and OOP
+				2. For other's code, use monkeypatching
+				3. If you need to mangle with source code: AST
+				4. Avoid bytecode patching if you can
 				---
 				## Thanks!
-				![t.hanks](img/indiana.gif)
+				![t.hanks](img/t.hanks.gif)
 
 				[We're hiring: datadoghq.com/jobs-engineering](https://www.datadoghq.com/jobs-engineering/)
 			</textarea>
