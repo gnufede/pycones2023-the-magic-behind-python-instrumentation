@@ -19,7 +19,7 @@
 			<section data-markdown>
 			<textarea data-template>
 				## Desentrañando el código: La magia de la instrumentación en Python
-				![qrcode](img/qrcode.png)
+				![qrcode](img/qr.gif)
 
 				Santa Cruz de Tenerife, Oct 07, 2023
 				---
@@ -284,6 +284,7 @@ if __name__ == "__main__":
 				---
 				## AST Patching Pros
 - Allows source code information (i.e. line number)
+- Allows fine-grained modifications (i.e. change a try/except)
 				---
 				## AST Patching Cons
 - Multiple AST patching is messy
@@ -391,9 +392,10 @@ query_results = inner_query()
 				---
 				## Uses Bytecode techniques
 - `pip install coveragepy`
+- `pip install slipcover`
 				---
 				## Bytecode Patching Pros
-- Allows low level access
+- Allows low level access and modifications, i.e. insert a return wherever
 				---
 				## Bytecode Patching Cons
 - Introduces patching overhead (low)
@@ -407,6 +409,36 @@ query_results = inner_query()
 				## The Prestige
 				![el truco final](img/el_truco_final.jpeg)
 
+				---
+				## ✨ Bytecode auto patcher
+```python
+from bytecode import Bytecode, Instr
+
+def print_stmt_bytecode(fullname):
+    return [
+        Instr("LOAD_NAME", arg="print"),
+        Instr("LOAD_CONST", arg=fullname),
+        Instr("CALL_FUNCTION", arg=1),
+    ]
+
+def new_get_code(self, fullname):
+    orig_code = self._orig_get_code(fullname)
+    new_bytecode = Bytecode.from_code(orig_code)
+    new_bytecode[:0] = print_stmt_bytecode(fullname)
+    return new_bytecode.to_code()
+```
+				---
+				## ✨ Bytecode auto patcher
+```python
+from importlib._bootstrap_external import (
+                    SourceLoader,
+                    SourcelessFileLoader
+                    )
+
+for i in SourceLoader, SourcelessFileLoader:
+    setattr(i, "_orig_get_code", i.get_code)
+    setattr(i, "get_code", new_get_code)
+```
 				---
 				## ✨ AST auto patcher
 ```python
@@ -439,36 +471,6 @@ def exec_module(self, module):
     _call_with_frames_removed(exec, code, module.__dict__)
 
 setattr(SourceFileLoader, "exec_module", exec_module)
-```
-				---
-				## ✨ Bytecode auto patcher
-```python
-from bytecode import Bytecode, Instr
-
-def print_stmt_bytecode(fullname):
-    return [
-        Instr("LOAD_NAME", arg="print"),
-        Instr("LOAD_CONST", arg=fullname),
-        Instr("CALL_FUNCTION", arg=1),
-    ]
-
-def new_get_code(self, fullname):
-    orig_code = self._orig_get_code(fullname)
-    new_bytecode = Bytecode.from_code(orig_code)
-    new_bytecode[:0] = print_stmt_bytecode(fullname)
-    return new_bytecode.to_code()
-```
-				---
-				## ✨ Bytecode auto patcher
-```python
-from importlib._bootstrap_external import (
-                    SourceLoader,
-                    SourcelessFileLoader
-                    )
-
-for i in SourceLoader, SourcelessFileLoader:
-    setattr(i, "_orig_get_code", i.get_code)
-    setattr(i, "get_code", new_get_code)
 ```
 				---
 				## 📚 Sitecustomize
@@ -513,6 +515,11 @@ token
 				![t.hanks](img/t.hanks.gif)
 
 				[We're hiring: datadoghq.com/jobs-engineering](https://www.datadoghq.com/jobs-engineering/)
+				---
+				## Thanks!
+				![qrcode](img/qr.gif)
+
+				[http://github.com/gnufede/pycones2023-the-magic-behind-python-instrumentation](https://github.com/gnufede/pycones2023-the-magic-behind-python-instrumentation)
 			</textarea>
 			</section>
 
